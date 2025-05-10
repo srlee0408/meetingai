@@ -30,7 +30,7 @@ export async function sendToWebhook(
 ): Promise<boolean> {
   try {
     // 웹훅 URL 설정
-    const webhookUrl = 'https://hook.eu2.make.com/3kkk3xpjhdp9x9hali67q6jsm79mpn7r';
+    const webhookUrl = '';//개인 웹훅 업로드해주쉐요!
     
     // 회의 정보 형식화
     const meetingInfo = detail ? {
