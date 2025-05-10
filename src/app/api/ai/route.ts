@@ -40,9 +40,10 @@ export async function POST(request: NextRequest) {
         openai = new OpenAI({
           apiKey: apiKey,
         });
-      } catch (error: any) {
+      } catch (error) {
+        const err = error as Error;
         return NextResponse.json(
-          { error: error.message || 'OpenAI API 키가 설정되지 않았습니다.' },
+          { error: err.message || 'OpenAI API 키가 설정되지 않았습니다.' },
           { status: 500 }
         );
       }
@@ -101,10 +102,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           result: response.choices[0]?.message?.content || '요약을 생성할 수 없습니다.'
         });
-      } catch (apiError: any) {
-        console.error('❌ OpenAI API 호출 중 오류:', apiError);
+      } catch (apiError) {
+        const err = apiError as Error;
+        console.error('❌ OpenAI API 호출 중 오류:', err);
         return NextResponse.json(
-          { error: 'OpenAI API 호출 중 오류가 발생했습니다.', details: apiError.message },
+          { error: 'OpenAI API 호출 중 오류가 발생했습니다.', details: err.message },
           { status: 500 }
         );
       }
@@ -169,10 +171,11 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
           result: response.choices[0]?.message?.content || '회의록을 생성할 수 없습니다.'
         });
-      } catch (apiError: any) {
-        console.error('❌ OpenAI API 호출 중 오류:', apiError);
+      } catch (apiError) {
+        const err = apiError as Error;
+        console.error('❌ OpenAI API 호출 중 오류:', err);
         return NextResponse.json(
-          { error: 'OpenAI API 호출 중 오류가 발생했습니다.', details: apiError.message },
+          { error: 'OpenAI API 호출 중 오류가 발생했습니다.', details: err.message },
           { status: 500 }
         );
       }
@@ -183,10 +186,11 @@ export async function POST(request: NextRequest) {
       { error: '지원하지 않는 요청 타입입니다.' },
       { status: 400 }
     );
-  } catch (error: any) {
-    console.error('🔴 AI 처리 중 오류:', error);
+  } catch (error) {
+    const err = error as Error;
+    console.error('🔴 AI 처리 중 오류:', err);
     return NextResponse.json(
-      { error: 'AI 처리 중 오류가 발생했습니다.', details: error.message },
+      { error: 'AI 처리 중 오류가 발생했습니다.', details: err.message },
       { status: 500 }
     );
   }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import MemoSection from './components/MemoSection';
 import AudioRecorder from './components/AudioRecorder';
 import TranscriptionResult from './components/TranscriptionResult';
@@ -14,6 +14,8 @@ import { generateSummary as generateAISummary, generateMeetingMinutes } from './
 import { loadSettings, saveSettings } from './utils/settingsService';
 // 웹훅 서비스 추가
 import { sendToWebhook } from './utils/webhookService';
+// 타입 추가
+import { MemoItem, TranscriptionResultType, DetailResultType } from './types';
 
 // 기본 회의 헤더 정보
 const defaultHeaderInfo: MeetingHeaderInfo = {
@@ -27,9 +29,9 @@ const defaultHeaderInfo: MeetingHeaderInfo = {
 
 export default function MeetingPage() {
   const [headerInfo, setHeaderInfo] = useState<MeetingHeaderInfo>(defaultHeaderInfo);
-  const [transcriptionResult, setTranscriptionResult] = useState<any>(null);
+  const [transcriptionResult, setTranscriptionResult] = useState<TranscriptionResultType | null>(null);
   const [summaryResult, setSummaryResult] = useState<string | undefined>(undefined);
-  const [detailResult, setDetailResult] = useState<any>(undefined);
+  const [detailResult, setDetailResult] = useState<DetailResultType | undefined>(undefined);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [activeTab, setActiveTab] = useState<'stt' | 'summary' | 'detail'>('stt');
@@ -99,7 +101,7 @@ export default function MeetingPage() {
   /**
    * 요약 생성 함수 (OpenAI API 사용)
    */
-  const generateSummary = async () => {
+  const generateSummary = useCallback(async () => {
     if (!transcriptionResult) return;
     
     setIsSummaryLoading(true);
@@ -114,12 +116,12 @@ export default function MeetingPage() {
     } finally {
       setIsSummaryLoading(false);
     }
-  };
+  }, [transcriptionResult, settings.summaryPrompt, setIsSummaryLoading, setSummaryResult, setErrorMessage]);
 
   /**
    * 상세 회의록 생성 함수 (OpenAI API 사용)
    */
-  const generateDetail = async () => {
+  const generateDetail = useCallback(async () => {
     if (!transcriptionResult) return;
     
     setIsDetailLoading(true);
@@ -162,13 +164,20 @@ export default function MeetingPage() {
     } finally {
       setIsDetailLoading(false);
     }
-  };
+  }, [
+    transcriptionResult, 
+    headerInfo, 
+    settings.minutesPrompt, 
+    setIsDetailLoading, 
+    setDetailResult, 
+    setErrorMessage
+  ]);
 
   /**
    * 음성 인식 완료 후 결과 처리 함수
    * @param result Assembly AI로부터 받은 음성 인식 결과
    */
-  const handleTranscriptionComplete = (result: any) => {
+  const handleTranscriptionComplete = (result: TranscriptionResultType) => {
     setTranscriptionResult(result);
     setIsProcessing(false);
     setErrorMessage('');
@@ -187,7 +196,7 @@ export default function MeetingPage() {
    * 메모 추가 핸들러
    * @param memo 추가된 메모 데이터
    */
-  const handleMemoAdd = (memo: any) => {
+  const handleMemoAdd = (memo: MemoItem) => {
     console.log('새 메모 추가:', memo);
     // TODO: 메모 저장 로직 구현
   };
@@ -203,7 +212,7 @@ export default function MeetingPage() {
     if (activeTab === 'detail' && transcriptionResult && !detailResult && !isDetailLoading) {
       generateDetail();
     }
-  }, [activeTab, transcriptionResult, summaryResult, detailResult, isSummaryLoading, isDetailLoading]);
+  }, [activeTab, transcriptionResult, summaryResult, detailResult, isSummaryLoading, isDetailLoading, generateSummary, generateDetail]);
 
   /**
    * 설정 저장 핸들러

@@ -2,6 +2,19 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { uploadAudio, startTranscription, waitForTranscriptionCompletion } from '../utils/assemblyAIService';
+import { TranscriptionResultType } from '../types';
+
+/**
+ * 웹 오디오 API 타입 정의 
+ */
+interface AudioContextWindow extends Window {
+  webkitAudioContext: typeof AudioContext;
+}
+
+// 안전한 타입 체크 함수 추가
+function hasWebkitAudioContext(window: Window): window is AudioContextWindow {
+  return 'webkitAudioContext' in window;
+}
 
 /**
  * 오디오 녹음 상태를 나타내는 타입
@@ -9,7 +22,7 @@ import { uploadAudio, startTranscription, waitForTranscriptionCompletion } from 
 type RecordingState = 'inactive' | 'recording' | 'paused' | 'processing';
 
 interface AudioRecorderProps {
-  onTranscriptionComplete: (result: any) => void;
+  onTranscriptionComplete: (result: TranscriptionResultType) => void;
   onError: (error: string) => void;
 }
 
@@ -111,7 +124,13 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onTranscriptionComplete, 
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
       // 오디오 컨텍스트 및 분석기 초기화
-      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioContextClass = window.AudioContext || (hasWebkitAudioContext(window) ? window.webkitAudioContext : null);
+      
+      if (!AudioContextClass) {
+        throw new Error('이 브라우저에서는 AudioContext를 지원하지 않습니다.');
+      }
+      
+      audioContextRef.current = new AudioContextClass();
       analyserRef.current = audioContextRef.current.createAnalyser();
       analyserRef.current.fftSize = 256;
       
@@ -165,8 +184,9 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({ onTranscriptionComplete, 
             onTranscriptionComplete(result);
             setRecordingState('inactive');
             setRecordingTime(0);
-          } catch (apiError: any) {
-            let errorMsg = apiError instanceof Error ? apiError.message : '음성 변환 중 오류가 발생했습니다.';
+          } catch (apiError) {
+            const err = apiError as Error;
+            let errorMsg = err.message || '음성 변환 중 오류가 발생했습니다.';
             
             // API 키 관련 오류 메시지 개선
             if (errorMsg.includes('API 키가 설정되지 않았습니다')) {

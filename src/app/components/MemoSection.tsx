@@ -2,14 +2,7 @@
 
 import React, { useState, useRef, useEffect, KeyboardEvent } from 'react';
 import { formatTimestamp } from '../utils/formatTime';
-
-// 메모 아이템 인터페이스 정의
-interface MemoItem {
-  id: string;
-  content: string;
-  timestamp: number; // 녹음 시작 기준 경과 시간(초)
-  createdAt: Date;
-}
+import { MemoItem } from '../types';
 
 interface MemoSectionProps {
   isRecording: boolean;

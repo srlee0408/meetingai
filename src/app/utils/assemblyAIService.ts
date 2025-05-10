@@ -4,6 +4,7 @@
  */
 
 import { ASSEMBLY_AI_API_KEY } from './env';
+import { TranscriptionResultType } from '../types';
 
 // Assembly AI API 기본 URL
 const API_BASE_URL = 'https://api.assemblyai.com/v2';
@@ -84,7 +85,7 @@ export async function startTranscription(audioUrl: string): Promise<string> {
  * @param transcriptId 음성 인식 작업 ID
  * @returns 음성 인식 결과 또는 상태
  */
-export async function getTranscriptionResult(transcriptId: string): Promise<any> {
+export async function getTranscriptionResult(transcriptId: string): Promise<TranscriptionResultType> {
   try {
     const apiKey = validateAPIKey();
     
@@ -111,8 +112,15 @@ export async function getTranscriptionResult(transcriptId: string): Promise<any>
  * @param transcriptId 음성 인식 작업 ID
  * @returns 음성 인식 완료된 결과
  */
-export async function waitForTranscriptionCompletion(transcriptId: string): Promise<any> {
-  let result;
+export async function waitForTranscriptionCompletion(transcriptId: string): Promise<TranscriptionResultType> {
+  // 초기값으로 빈 객체 초기화 (타입 오류 방지)
+  let result: TranscriptionResultType = {
+    id: transcriptId,
+    status: 'processing',
+    text: '',
+    audio_url: ''
+  };
+  
   let status = 'processing';
   
   // 최대 대기 시간 설정 (5분)
